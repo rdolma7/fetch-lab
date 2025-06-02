@@ -1,4 +1,6 @@
-const { Carousel } = bootstrap;
+import { appendCarousel, clear, createCarouselItem } from "./Carousel.js";
+
+const { Carousel } = bootstrap
 
 // import axios from "axios";
 
@@ -12,8 +14,9 @@ const progressBar = document.getElementById("progressBar");
 const getFavouritesBtn = document.getElementById("getFavouritesBtn");
 
 // Step 0: Store your API key here for reference and easy access.
-const API_KEY =
-  "live_l4vF7efcUc1vj8Q5JXjWOqy1FJTiBUBz4PJi5p3GWjYB8DG2UpM35ocmN9b2r2Kn";
+// Use it as the 'x-api-key' header when making any request to the API, 
+// or by adding as a query string parameter e.g. 'api_key=live_3oxvCehvrn1ZuaXKUr4eZDlajO3uvJkZcBT6I4nZqArGmcfFEbH4lKGS4a6JA9Bx'
+const API_KEY = "live_3oxvCehvrn1ZuaXKUr4eZDlajO3uvJkZcBT6I4nZqArGmcfFEbH4lKGS4a6JA9Bx";
 
 /**
  * 1. Create an async function "initialLoad" that does the following:
@@ -24,19 +27,22 @@ const API_KEY =
  * This function should execute immediately.
  */
 async function initialLoad() {
-  const response = await fetch("https://api.thecatapi.com/v1/breeds", {headers:{'x-api-key': API_KEY}});
-  const breeds = await response.json();
-  // console.log(breedData);
-  for (let breed of breeds) {
-    const optionEl = document.createElement("option");
-    optionEl.textContent = breed.name;
-    optionEl.setAttribute("value", breed.id);
-    breedSelect.appendChild(optionEl);
-  }
- 
+    const response = await fetch('https://api.thecatapi.com/v1/breeds', {
+        headers: { 'x-api-key': API_KEY },
+    })
+    const breeds = await response.json();
+
+    for (const breed of breeds) {
+        const optionEl = document.createElement('option');
+        optionEl.textContent = breed.name;
+        optionEl.setAttribute('value', breed.id);
+
+        breedSelect.appendChild(optionEl);
+    }
+
+    breedPopulation();
 }
 initialLoad();
-
 
 /**
  * 2. Create an event handler for breedSelect that does the following:
@@ -52,9 +58,57 @@ initialLoad();
  * - Each new selection should clear, re-populate, and restart the Carousel.
  * - Add a call to this function to the end of your initialLoad function above to create the initial carousel.
  */
- breedSelect.addEventListener("change", async (event) => {
-    
-  });
+function breedPopulation() {
+    breedSelect.addEventListener('change', async event => {
+        const breedId = event.target.value;
+        const imgLimit = 100;
+        const response = await fetch(`https://api.thecatapi.com/v1/images/search?limit=${imgLimit}&breed_ids=${breedId}`, {
+            headers: { 'x-api-key': API_KEY }
+        })
+        const breedImgs = await response.json();
+
+        clearData();
+        infoDump.appendChild(mapInfoData(breedImgs[0].breeds[0]));
+        breedImgs.forEach(breedImg => {
+            const carouselEl = createCarouselItem(breedImg.url, event.target.textContent, breedImg.id);
+            appendCarousel(carouselEl);
+        });
+    });
+}
+
+function mapInfoData(info) {
+    const frag = document.createDocumentFragment();
+    const ul = document.createElement('ul');
+    ul.append(
+        objectAssign('li', `Adaptability: ${info.adaptability}`),
+        objectAssign('li', `Affection level: ${info.affection_level}`),
+        objectAssign('li', `Child Friendly: ${info.child_friendly}`),
+        objectAssign('li', `Dog Friendly: ${info.dog_friendly}`),
+        objectAssign('li', `Energy Level: ${info.energy_level}`),
+        objectAssign('li', `Intelligence: ${info.intelligence}`)
+    )
+
+    frag.append(
+        objectAssign('h1', 'Description'),
+        objectAssign('p', info.description),
+        objectAssign('h3', 'Key Characteristics (1-5 scale):'),
+        ul
+    )
+
+    return frag;
+}
+
+function objectAssign(tag, val) {
+    return Object.assign(document.createElement(tag), { textContent: val });
+}
+
+function clearData() {
+    while(infoDump.firstChild) {
+        infoDump.removeChild(infoDump.firstChild);
+    }
+    clear();
+}
+
 /**
  * 3. Fork your own sandbox, creating a new one named "JavaScript Axios Lab."
  */
@@ -107,7 +161,7 @@ initialLoad();
  * - You can call this function by clicking on the heart at the top right of any image.
  */
 export async function favourite(imgId) {
-  // your code here
+    // your code here
 }
 
 /**
